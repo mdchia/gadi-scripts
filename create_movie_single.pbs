@@ -1,0 +1,49 @@
+#!/bin/bash
+#PBS -P xe2
+#PBS -q normal
+#PBS -l ncpus=16
+#PBS -l walltime=10:00:00
+#PBS -l mem=16G
+#PBS -l jobfs=128GB
+
+#PBS -m abe
+#PBS -M Ming-Dao.Chia@anu.edu.au
+#PBS -e movie_logs.txt
+#PBS -o movie_logs.txt
+
+## required for Gadi
+#PBS -l storage=gdata/xe2
+
+## The job will be executed from current working directory instead of home.
+#PBS -l wd
+
+set -xeou pipefail
+module load ffmpeg
+
+# run in the output dir
+# call as follows:
+# qsub -v dirtorun=/path/to/outdir /g/data/xe2/ming/pbs/create_movie_single.pbs
+
+FFMPEG_LOG_DIR="/g/data/xe2/phenomics/pipeline_logs/movies/ffmpeg"
+TMPDIR="${TMPDIR:-.}"
+THREADS=8
+
+FRAMERATE=30
+BINPATH=/g/data/xe2/phenomics/go-timestreamtools
+
+find "${dirtorun}" -name '*.jpg'|sort -u > ffmpeg-temp.txt
+
+# make sure they are sorted.
+# sort -u "$TMPDIR/${NAME}-files.txt" -o "$TMPDIR/${NAME}-files-ffmpeg.txt"
+
+# FFMPEG encodes
+# encode as lossless h.264 mkv
+# $BINPATH/ffmpeg -y -f concat -safe 0 -r "${FRAMERATE}" -threads "${THREADS}" -i "$TMPDIR/${NAME}-files-ffmpeg.txt" \
+#   -c:v libx264 -preset veryslow -crf 0 \
+#   "${OUTPUT}.mkv" 2> "$FFMPEG_LOG_DIR/$$-mkv.log"
+
+# encode as lossy 1080p h.264 mp4
+$BINPATH/ffmpeg -y -f concat -safe 0 -r "${FRAMERATE}" -threads "${THREADS}" -i "ffmpeg-temp.txt" \
+  -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3 \
+  -vf "scale=1920:-1" \
+  "movie-1080p.mp4" 2> "movie_logs_ffmpeg.txt"
