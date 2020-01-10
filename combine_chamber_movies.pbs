@@ -1,0 +1,35 @@
+#!/bin/bash
+#PBS -P xe2
+#PBS -q normal
+#PBS -l ncpus=16
+#PBS -l walltime=10:00:00
+#PBS -l mem=64G
+#PBS -l jobfs=128GB
+
+#PBS -m abe
+#PBS -M Ming-Dao.Chia@anu.edu.au
+#PBS -e movie_logs.txt
+#PBS -o movie_logs.txt
+
+## required for Gadi
+#PBS -l storage=gdata/xe2
+
+## The job will be executed from current working directory instead of home.
+#PBS -l wd
+
+set -xeou pipefail
+module load ffmpeg
+
+# run in the output dir
+# call as follows:
+# qsub -v "LEFT=/path/to/left.mp4,RIGHT=/path/to/right.mp4,NAME=out" -N GC35combo_dec_ffmpeg /g/data/xe2/ming/pbs/combine_chamber_movies.pbs
+
+THREADS=16
+BINPATH=/g/data/xe2/phenomics/opt/go-timestreamtools
+
+
+# FFMPEG encodes
+
+# encode as lossy 1080p h.264 mp4
+$BINPATH/ffmpeg -i $LEFT -i $RIGHT -threads "${THREADS}" -filter_complex hstack=inputs=2 \
+  "${NAME}-combo.mp4" 2> "${NAME}_logs_ffmpeg.txt"
