@@ -22,18 +22,22 @@ module load ffmpeg
 
 # run in the output dir
 # call as follows:
-# qsub -v dirtorun=/path/to/outdir /g/data/xe2/ming/pbs/create_movie_single.pbs
+# qsub -v "SOURCE=/path/to/outdir,START=2019-12-01,END=2019-12-31,STARTTOD=08:00,ENDTOD=18:00,NAME=GC35L_dec" -N GC35L_dec_ffmpeg /g/data/xe2/ming/pbs/create_movie_single.pbs
 
 TMPDIR="${TMPDIR:-.}"
 THREADS=16
-
 FRAMERATE=30
 BINPATH=/g/data/xe2/phenomics/opt/go-timestreamtools
 
-find "${dirtorun}" -name '*.jpg'|while read line; do echo "file '$line'"; done|sort -u > ffmpeg-temp.txt
+# set via -v
+STARTTOD="${STARTTOD:-00:00}"
+ENDTOD="${ENDTOD:-23:59}"
+START="${START:-$(date -d "-30 years" "+%Y-%m-%d")}"
+END=${END:-$(date -d "1 day" "+%Y-%m-%d")}
+NAME="${NAME:-movie}"
 
-# make sure they are sorted.
-# sort -u "$TMPDIR/${NAME}-files.txt" -o "$TMPDIR/${NAME}-files-ffmpeg.txt"
+$BINPATH/tsselect_linux-amd64 -source "$SOURCE" -start "$START" -end "$END" -starttod "$STARTTOD" -endtod "$ENDTOD" | \
+  grep -i '.jpg' |while read line; do echo "file '$line'"; done |sort -u > ${NAME}-ffmpeg1080p-temp.txt
 
 # FFMPEG encodes
 # encode as lossless h.264 mkv
@@ -42,7 +46,9 @@ find "${dirtorun}" -name '*.jpg'|while read line; do echo "file '$line'"; done|s
 #   "${OUTPUT}.mkv" 2> "$FFMPEG_LOG_DIR/$$-mkv.log"
 
 # encode as lossy 1080p h.264 mp4
-$BINPATH/ffmpeg -y -f concat -safe 0 -r "${FRAMERATE}" -threads "${THREADS}" -i "ffmpeg-temp.txt" \
+$BINPATH/ffmpeg -y -f concat -safe 0 -r "${FRAMERATE}" -threads "${THREADS}" -i "${NAME}-ffmpeg1080p-temp.txt" \
   -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3 \
   -vf "scale=1920:-1" \
-  "movie-1080p.mp4" 2> "movie_logs_ffmpeg.txt"
+  "${NAME}-1080p.mp4" 2> "${NAME}_logs_ffmpeg.txt"
+
+rm ${NAME}-ffmpeg1080p-temp.txt
