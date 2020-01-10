@@ -24,12 +24,11 @@ module load ffmpeg
 # call as follows:
 # qsub -v dirtorun=/path/to/outdir /g/data/xe2/ming/pbs/create_movie_single.pbs
 
-FFMPEG_LOG_DIR="/g/data/xe2/phenomics/pipeline_logs/movies/ffmpeg"
 TMPDIR="${TMPDIR:-.}"
 THREADS=8
 
 FRAMERATE=30
-BINPATH=/g/data/xe2/phenomics/go-timestreamtools
+BINPATH=/g/data/xe2/phenomics/opt/go-timestreamtools
 
 find "${dirtorun}" -name '*.jpg'|sort -u > ffmpeg-temp.txt
 
