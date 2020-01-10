@@ -25,12 +25,12 @@ module load ffmpeg
 # qsub -v dirtorun=/path/to/outdir /g/data/xe2/ming/pbs/create_movie_single.pbs
 
 TMPDIR="${TMPDIR:-.}"
-THREADS=8
+THREADS=16
 
 FRAMERATE=30
 BINPATH=/g/data/xe2/phenomics/opt/go-timestreamtools
 
-find "${dirtorun}" -name '*.jpg'|sort -u > ffmpeg-temp.txt
+find "${dirtorun}" -name '*.jpg'|while read line; do echo "file '$line'"; done|sort -u > ffmpeg-temp.txt
 
 # make sure they are sorted.
 # sort -u "$TMPDIR/${NAME}-files.txt" -o "$TMPDIR/${NAME}-files-ffmpeg.txt"
